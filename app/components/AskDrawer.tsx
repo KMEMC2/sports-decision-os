@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import type { Decision } from "@/lib/history";
+import type { UploadedDocument } from "@/lib/uploaded-docs";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -10,14 +12,66 @@ const PRESETS = [
   "Who are our cleanest extension candidates with no medical concerns?",
 ];
 
+function renderInline(text: string): ReactNode[] {
+  return text
+    .split(/(\*\*[^*]+\*\*|\[[^\]]+\])/g)
+    .filter(Boolean)
+    .map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("[") && part.endsWith("]")) {
+        return <span className="chat-citation" key={index}>{part.slice(1, -1)}</span>;
+      }
+      return part;
+    });
+}
+
+function AssistantResponse({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+
+  function flushBullets() {
+    if (!bullets.length) return;
+    blocks.push(
+      <ul key={`list-${blocks.length}`}>
+        {bullets.map((bullet, index) => <li key={index}>{renderInline(bullet)}</li>)}
+      </ul>
+    );
+    bullets = [];
+  }
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("- ")) {
+      bullets.push(trimmed.slice(2));
+      return;
+    }
+    flushBullets();
+    if (!trimmed) return;
+    const heading = trimmed.match(/^\*\*([^*]+)\*\*:?\s*$/);
+    if (heading) {
+      blocks.push(<h3 key={`heading-${blocks.length}`}>{heading[1]}</h3>);
+    } else {
+      blocks.push(<p key={`paragraph-${blocks.length}`}>{renderInline(trimmed)}</p>);
+    }
+  });
+  flushBullets();
+
+  return <div className="assistant-response">{blocks}</div>;
+}
+
 export default function AskDrawer({
   open,
   onClose,
   history,
+  uploadedDocuments,
 }: {
   open: boolean;
   onClose: () => void;
   history: Decision[];
+  uploadedDocuments: UploadedDocument[];
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -41,7 +95,7 @@ export default function AskDrawer({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next, history }),
+        body: JSON.stringify({ messages: next, history, uploadedDocuments }),
       });
       const data = await res.json();
       setMessages([...next, { role: "assistant", content: data.reply }]);
@@ -100,13 +154,13 @@ export default function AskDrawer({
               className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`px-4 py-2.5 rounded-lg max-w-[85%] whitespace-pre-wrap leading-relaxed text-sm ${
+                className={`px-4 py-2.5 rounded-lg max-w-[88%] leading-relaxed text-sm ${
                   m.role === "user"
                     ? "bg-signal text-ink font-medium"
-                    : "bg-surface-2 text-text"
+                    : "assistant-message bg-surface-2 text-text"
                 }`}
               >
-                {m.content}
+                {m.role === "assistant" ? <AssistantResponse content={m.content} /> : m.content}
               </div>
             </div>
           ))}

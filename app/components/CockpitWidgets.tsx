@@ -14,7 +14,15 @@ function Widget({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-export default function CockpitWidgets() {
+export default function CockpitWidgets({
+  documents,
+  onAddDocument,
+  onRemoveDocument,
+}: {
+  documents: UploadedDocument[];
+  onAddDocument: (document: UploadedDocument) => void;
+  onRemoveDocument: (id: string) => void;
+}) {
   return (
     <aside aria-label="Cockpit widgets" className="flex flex-col gap-3">
       <Widget title="Decisions on deck">
@@ -40,6 +48,14 @@ export default function CockpitWidgets() {
           ))}
         </ul>
       </Widget>
+
+      <DocumentIntake
+        documents={documents}
+        onAdd={onAddDocument}
+        onRemove={onRemoveDocument}
+      />
     </aside>
   );
 }
+import DocumentIntake from "./DocumentIntake";
+import type { UploadedDocument } from "@/lib/uploaded-docs";

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import type { FeedEvent } from "@/lib/league";
 import type { Decision } from "@/lib/history";
+import type { UploadedDocument } from "@/lib/uploaded-docs";
 
 type CountedFinding = { title: string; detail: string; sourceCount: number };
 export type ImpactResult = {
@@ -38,6 +39,11 @@ export type ImpactResult = {
   recommendation: string;
   citedSourceCount: number;
   citationsVerified: boolean;
+  engine?: {
+    provider: string;
+    model: string;
+    generatedLive: boolean;
+  };
 };
 
 const EMPTY: ImpactResult = {
@@ -50,12 +56,21 @@ const PRECEDENT_COLOR = {
   good: "var(--outcome-good)", bad: "var(--outcome-bad)", mixed: "var(--outcome-mixed)",
 };
 
+const SYNTHESIS_STAGES = [
+  "Retrieving permitted evidence",
+  "Matching external signal to internal assets",
+  "Reconciling department positions",
+  "Checking organizational precedent",
+  "Drafting cited decision brief",
+];
+
 function SectionLabel({ number, children }: { number: string; children: React.ReactNode }) {
   return <p className="brief-label">{number} / {children}</p>;
 }
 
 export default function ImpactDrawer({
   event, history, onClose, onRecordDecision, embedded = false, preloadedResult,
+  uploadedDocuments = [],
 }: {
   event: FeedEvent | null;
   history: Decision[];
@@ -63,22 +78,25 @@ export default function ImpactDrawer({
   onRecordDecision: (decision: Decision) => void;
   embedded?: boolean;
   preloadedResult?: ImpactResult;
+  uploadedDocuments?: UploadedDocument[];
 }) {
   const [result, setResult] = useState<ImpactResult | null>(preloadedResult ?? null);
   const [loading, setLoading] = useState(false);
   const [recorded, setRecorded] = useState(false);
   const [liveSynthesis, setLiveSynthesis] = useState(false);
   const [liveError, setLiveError] = useState("");
+  const [synthesisStage, setSynthesisStage] = useState(0);
 
   async function requestImpact() {
     if (!event) return;
     setLoading(true);
     setLiveError("");
+    setSynthesisStage(0);
     try {
       const response = await fetch("/api/impact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event, history }),
+        body: JSON.stringify({ event, history, uploadedDocuments }),
       });
       const data = await response.json();
       const validBrief =
@@ -110,7 +128,7 @@ export default function ImpactDrawer({
     setLoading(true); setResult(null); setRecorded(false);
     fetch("/api/impact", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event, history }),
+      body: JSON.stringify({ event, history, uploadedDocuments }),
     })
       .then(async (res) => {
         const data = await res.json();
@@ -124,6 +142,14 @@ export default function ImpactDrawer({
     // The analysis reruns only when a new event is selected.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event, preloadedResult]);
+
+  useEffect(() => {
+    if (!loading || !result) return;
+    const interval = window.setInterval(() => {
+      setSynthesisStage((current) => Math.min(current + 1, SYNTHESIS_STAGES.length - 1));
+    }, 2400);
+    return () => window.clearInterval(interval);
+  }, [loading, result]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -161,6 +187,40 @@ export default function ImpactDrawer({
           {!embedded && <button type="button" onClick={onClose} aria-label="Close" className="brief-close">×</button>}
         </header>
 
+        <div className={`ai-engine-strip${loading ? " is-running" : ""}${liveSynthesis ? " is-complete" : ""}`}>
+          <div className="ai-engine-identity">
+            <span className="ai-orbit" aria-hidden="true"><i /><i /><i /></span>
+            <div>
+              <small>AIGM DECISION ENGINE</small>
+              <strong>
+                {result?.engine?.generatedLive
+                  ? "Cross-department synthesis / live"
+                  : "Decision synthesis ready"}
+              </strong>
+            </div>
+          </div>
+          <div className="ai-engine-state">
+            <span>{loading ? "PROCESSING LIVE" : liveError ? "RETRY AVAILABLE" : liveSynthesis ? "LIVE BRIEF VERIFIED" : "READY"}</span>
+            <p>
+              {loading
+                ? SYNTHESIS_STAGES[synthesisStage]
+                : liveError
+                  ? "Existing decision brief preserved"
+                  : liveSynthesis
+                    ? `${result?.citedSourceCount ?? 0} sources reconciled · disagreement required · citations checked`
+                    : "Run a fresh synthesis against current evidence and decision history"}
+            </p>
+          </div>
+          <div className="ai-stage-track" aria-hidden="true">
+            {SYNTHESIS_STAGES.map((stage, index) => (
+              <i
+                key={stage}
+                className={loading && index <= synthesisStage ? "active" : liveSynthesis ? "complete" : ""}
+              />
+            ))}
+          </div>
+        </div>
+
         {loading && !result ? (
           <div className="brief-loading"><i /><i /><i /><i /></div>
         ) : result && (
@@ -174,6 +234,11 @@ export default function ImpactDrawer({
                 <h2>Decision brief</h2>
               </div>
               <div className="brief-heading-actions">
+                {uploadedDocuments.length > 0 && (
+                  <span className="session-source-count">
+                    +{uploadedDocuments.length} SESSION {uploadedDocuments.length === 1 ? "DOCUMENT" : "DOCUMENTS"}
+                  </span>
+                )}
                 {embedded && (
                   <button type="button" className="live-synthesis" onClick={requestImpact} disabled={loading}>
                     <i />{loading ? "SYNTHESIZING" : liveError ? "SYNTHESIS FAILED · RETRY" : liveSynthesis ? "LIVE SYNTHESIS COMPLETE" : "RUN LIVE SYNTHESIS"}

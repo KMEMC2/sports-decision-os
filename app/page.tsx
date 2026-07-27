@@ -9,12 +9,14 @@ import DecisionHistoryView from "./components/DecisionHistoryView";
 import { FEED, type FeedEvent } from "@/lib/league";
 import { HISTORY, type Decision } from "@/lib/history";
 import { DELIVERED_REYES_BRIEF } from "@/lib/delivered-brief";
+import type { UploadedDocument } from "@/lib/uploaded-docs";
 
 export default function Home() {
   const [activeEvent, setActiveEvent] = useState<FeedEvent | null>(null);
   const [askOpen, setAskOpen] = useState(false);
   const [view, setView] = useState<RailView>("brief");
   const [history, setHistory] = useState<Decision[]>(HISTORY);
+  const [documents, setDocuments] = useState<UploadedDocument[]>([]);
 
   function recordDecision(decision: Decision) {
     setHistory((prev) => [decision, ...prev]);
@@ -48,6 +50,7 @@ export default function Home() {
               event={FEED[0]}
               preloadedResult={DELIVERED_REYES_BRIEF}
               history={history}
+              uploadedDocuments={documents}
               onClose={() => undefined}
               onRecordDecision={recordDecision}
             />
@@ -59,17 +62,27 @@ export default function Home() {
         </main>
 
         <div className="workspace-widgets">
-          <CockpitWidgets />
+          <CockpitWidgets
+            documents={documents}
+            onAddDocument={(document) => setDocuments((current) => [document, ...current])}
+            onRemoveDocument={(id) => setDocuments((current) => current.filter((document) => document.id !== id))}
+          />
         </div>
       </div>
 
       <ImpactDrawer
         event={activeEvent}
         history={history}
+        uploadedDocuments={documents}
         onClose={() => setActiveEvent(null)}
         onRecordDecision={recordDecision}
       />
-      <AskDrawer open={askOpen} onClose={() => setAskOpen(false)} history={history} />
+      <AskDrawer
+        open={askOpen}
+        onClose={() => setAskOpen(false)}
+        history={history}
+        uploadedDocuments={documents}
+      />
     </div>
   );
 }
