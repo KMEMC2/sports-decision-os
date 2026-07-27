@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     });
     const text = response.content
       .filter((b) => b.type === "text")
-      .map((b: any) => b.text)
+      .map((b) => b.text)
       .join("\n");
     return Response.json({ reply: text });
   } catch (err) {

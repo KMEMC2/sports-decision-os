@@ -6,13 +6,14 @@ import ImpactDrawer from "./components/ImpactDrawer";
 import CockpitWidgets from "./components/CockpitWidgets";
 import AskDrawer from "./components/AskDrawer";
 import DecisionHistoryView from "./components/DecisionHistoryView";
-import type { FeedEvent } from "@/lib/league";
+import { FEED, type FeedEvent } from "@/lib/league";
 import { HISTORY, type Decision } from "@/lib/history";
+import { DELIVERED_REYES_BRIEF } from "@/lib/delivered-brief";
 
 export default function Home() {
   const [activeEvent, setActiveEvent] = useState<FeedEvent | null>(null);
   const [askOpen, setAskOpen] = useState(false);
-  const [view, setView] = useState<RailView>("feed");
+  const [view, setView] = useState<RailView>("brief");
   const [history, setHistory] = useState<Decision[]>(HISTORY);
 
   function recordDecision(decision: Decision) {
@@ -20,37 +21,50 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between gap-4 px-5 py-3 border-b border-hairline bg-surface shrink-0">
-        <h1 className="font-display text-sm text-text uppercase tracking-wide">
-          Cascades <span className="text-text-muted mx-1">·</span> Front Office
-        </h1>
+    <div className="workspace-shell">
+      <header className="workspace-header">
+        <div className="brand-lockup">
+          <span className="brand-mark">A</span>
+          <h1>AIGM / Cascades Decision Room</h1>
+        </div>
+        <div className="trust-strip" aria-label="Workspace status">
+          <span><i />Restricted workspace</span>
+          <span><i />Sources synchronized</span>
+          <span>Role permissions applied</span>
+          <span>Human judgment remains final</span>
+        </div>
         <button
           type="button"
           onClick={() => setAskOpen(true)}
-          className="flex items-center gap-3 rounded-md border border-hairline bg-surface-2 px-4 py-1.5 text-sm text-text-muted hover:text-text transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+          className="ask-trigger"
         >
-          Ask across every department
-          <kbd className="font-mono text-[11px] text-text-muted border border-hairline rounded px-1.5 py-0.5">
-            ⌘K
-          </kbd>
+          Ask across every department <kbd>⌘K</kbd>
         </button>
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        <div className="w-52 shrink-0">
+      <div className="workspace-grid">
+        <div className="workspace-rail">
           <DepartmentRail view={view} onChangeView={setView} />
         </div>
 
-        <main className="flex-1 min-w-0 px-6 py-5 overflow-hidden">
-          {view === "feed" ? (
+        <main className="workspace-main">
+          {view === "brief" ? (
+            <ImpactDrawer
+              embedded
+              event={FEED[0]}
+              preloadedResult={DELIVERED_REYES_BRIEF}
+              history={history}
+              onClose={() => undefined}
+              onRecordDecision={recordDecision}
+            />
+          ) : view === "feed" ? (
             <LeagueFeed onSeeImpact={setActiveEvent} />
           ) : (
             <DecisionHistoryView history={history} />
           )}
         </main>
 
-        <div className="w-72 shrink-0 border-l border-hairline bg-surface px-4 py-5 overflow-y-auto">
+        <div className="workspace-widgets">
           <CockpitWidgets />
         </div>
       </div>

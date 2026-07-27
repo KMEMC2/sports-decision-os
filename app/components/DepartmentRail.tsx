@@ -22,7 +22,7 @@ function LockIcon() {
   );
 }
 
-export type RailView = "feed" | "history";
+export type RailView = "brief" | "feed" | "history";
 
 export default function DepartmentRail({
   view,
@@ -38,13 +38,24 @@ export default function DepartmentRail({
     >
       <button
         type="button"
+        aria-current={view === "brief" ? "page" : undefined}
+        onClick={() => onChangeView("brief")}
+        className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          view === "brief" ? "bg-surface-2 text-text" : "text-text-muted hover:text-text"
+        }`}
+      >
+        Decision Brief
+      </button>
+
+      <button
+        type="button"
         aria-current={view === "feed" ? "page" : undefined}
         onClick={() => onChangeView("feed")}
         className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
           view === "feed" ? "bg-surface-2 text-text" : "text-text-muted hover:text-text"
         }`}
       >
-        Front Office
+        League Activity
       </button>
 
       <button
