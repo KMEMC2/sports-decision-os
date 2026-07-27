@@ -1,15 +1,23 @@
 "use client";
 import { useState } from "react";
-import DepartmentRail from "./components/DepartmentRail";
+import DepartmentRail, { type RailView } from "./components/DepartmentRail";
 import LeagueFeed from "./components/LeagueFeed";
 import ImpactDrawer from "./components/ImpactDrawer";
 import CockpitWidgets from "./components/CockpitWidgets";
 import AskDrawer from "./components/AskDrawer";
+import DecisionHistoryView from "./components/DecisionHistoryView";
 import type { FeedEvent } from "@/lib/league";
+import { HISTORY, type Decision } from "@/lib/history";
 
 export default function Home() {
   const [activeEvent, setActiveEvent] = useState<FeedEvent | null>(null);
   const [askOpen, setAskOpen] = useState(false);
+  const [view, setView] = useState<RailView>("feed");
+  const [history, setHistory] = useState<Decision[]>(HISTORY);
+
+  function recordDecision(decision: Decision) {
+    setHistory((prev) => [decision, ...prev]);
+  }
 
   return (
     <div className="flex flex-col h-screen">
@@ -31,11 +39,15 @@ export default function Home() {
 
       <div className="flex flex-1 min-h-0">
         <div className="w-52 shrink-0">
-          <DepartmentRail />
+          <DepartmentRail view={view} onChangeView={setView} />
         </div>
 
         <main className="flex-1 min-w-0 px-6 py-5 overflow-hidden">
-          <LeagueFeed onSeeImpact={setActiveEvent} />
+          {view === "feed" ? (
+            <LeagueFeed onSeeImpact={setActiveEvent} />
+          ) : (
+            <DecisionHistoryView history={history} />
+          )}
         </main>
 
         <div className="w-72 shrink-0 border-l border-hairline bg-surface px-4 py-5 overflow-y-auto">
@@ -43,8 +55,13 @@ export default function Home() {
         </div>
       </div>
 
-      <ImpactDrawer event={activeEvent} onClose={() => setActiveEvent(null)} />
-      <AskDrawer open={askOpen} onClose={() => setAskOpen(false)} />
+      <ImpactDrawer
+        event={activeEvent}
+        history={history}
+        onClose={() => setActiveEvent(null)}
+        onRecordDecision={recordDecision}
+      />
+      <AskDrawer open={askOpen} onClose={() => setAskOpen(false)} history={history} />
     </div>
   );
 }

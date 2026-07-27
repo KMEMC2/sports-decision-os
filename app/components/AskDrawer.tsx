@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { Decision } from "@/lib/history";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -12,9 +13,11 @@ const PRESETS = [
 export default function AskDrawer({
   open,
   onClose,
+  history,
 }: {
   open: boolean;
   onClose: () => void;
+  history: Decision[];
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -38,7 +41,7 @@ export default function AskDrawer({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, history }),
       });
       const data = await res.json();
       setMessages([...next, { role: "assistant", content: data.reply }]);

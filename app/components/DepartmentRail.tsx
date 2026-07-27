@@ -22,7 +22,15 @@ function LockIcon() {
   );
 }
 
-export default function DepartmentRail() {
+export type RailView = "feed" | "history";
+
+export default function DepartmentRail({
+  view,
+  onChangeView,
+}: {
+  view: RailView;
+  onChangeView: (view: RailView) => void;
+}) {
   return (
     <nav
       aria-label="Departments"
@@ -30,10 +38,24 @@ export default function DepartmentRail() {
     >
       <button
         type="button"
-        aria-current="page"
-        className="text-left px-3 py-2 rounded-md text-sm font-medium bg-surface-2 text-text"
+        aria-current={view === "feed" ? "page" : undefined}
+        onClick={() => onChangeView("feed")}
+        className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          view === "feed" ? "bg-surface-2 text-text" : "text-text-muted hover:text-text"
+        }`}
       >
         Front Office
+      </button>
+
+      <button
+        type="button"
+        aria-current={view === "history" ? "page" : undefined}
+        onClick={() => onChangeView("history")}
+        className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          view === "history" ? "bg-surface-2 text-text" : "text-text-muted hover:text-text"
+        }`}
+      >
+        Decision History
       </button>
 
       <div className="mt-2 flex flex-col gap-1">
