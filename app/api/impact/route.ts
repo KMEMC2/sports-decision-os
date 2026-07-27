@@ -41,6 +41,28 @@ Rules:
 {
   "exposure": "one line: what's exposed and why it matters to us",
   "player": "the asset in question, e.g. Marcus Reyes, or null",
+  "generatedAt": "short current brief timestamp label",
+  "changedSinceLastReview": "one sentence describing the new information that changed the decision",
+  "decisionClock": {
+    "status": "monitor | prepare | act",
+    "deadline": "decision window based only on supplied event/context, or unknown",
+    "nextCatalyst": "next event that changes leverage",
+    "evidencePending": "most important missing evidence"
+  },
+  "detectionTrail": [
+    { "time": "relative sequence label such as T+00", "event": "what the system connected" }
+  ],
+  "costOfDelay": {
+    "assetAtRisk": "specific organizational asset or option at risk",
+    "mechanism": "how delay destroys leverage or optionality, without inventing dollar values",
+    "reversibility": "low | medium | high"
+  },
+  "decisionTension": {
+    "question": "the decision's central unresolved question",
+    "sideA": "departments and argument on one side",
+    "sideB": "departments and argument on the other side",
+    "resolution": "specific evidence or structure that could resolve the tension"
+  },
   "executiveSummary": "2-3 concise sentences",
   "consensus": [
     { "title": "short agreement headline", "detail": "where departments align", "sourceCount": 2 }
@@ -49,7 +71,7 @@ Rules:
     { "title": "short tension headline", "detail": "which departments differ and why", "sourceCount": 2 }
   ],
   "evidence": [
-    { "name": "Scouting", "finding": "one sentence", "source": "the doc title it came from" }
+    { "name": "Scouting", "finding": "one sentence", "source": "the doc title it came from", "excerpt": "short supporting excerpt or close paraphrase from the source" }
   ],
   "considerations": [
     { "title": "scenario or option", "detail": "decision consequence or timing consideration" }
@@ -58,6 +80,9 @@ Rules:
     { "title": "short label, e.g. Deferred on a Kessler wing (2024)", "outcome": "good | bad | mixed", "lesson": "one line: what it teaches for the current call" }
   ],
   "openQuestions": ["specific unresolved question"],
+  "nextActions": [
+    { "owner": "department or executive", "action": "concrete next action", "due": "decision-relative due time" }
+  ],
   "recommendation": "one line recommendation",
   "citedSourceCount": 5,
   "citationsVerified": true
@@ -80,6 +105,12 @@ function extractJson(raw: string): string {
 const EMPTY_RESULT = {
   exposure: "",
   player: null,
+  generatedAt: "",
+  changedSinceLastReview: "",
+  decisionClock: undefined,
+  detectionTrail: [],
+  costOfDelay: undefined,
+  decisionTension: undefined,
   executiveSummary: "",
   consensus: [],
   disagreement: [],
@@ -87,6 +118,7 @@ const EMPTY_RESULT = {
   considerations: [],
   precedents: [],
   openQuestions: [],
+  nextActions: [],
   recommendation: "",
   citedSourceCount: 0,
   citationsVerified: false,
@@ -99,6 +131,18 @@ function normalizeResult(value: unknown) {
   return {
     exposure: typeof data.exposure === "string" ? data.exposure : "",
     player: typeof data.player === "string" ? data.player : null,
+    generatedAt: typeof data.generatedAt === "string" ? data.generatedAt : "",
+    changedSinceLastReview:
+      typeof data.changedSinceLastReview === "string" ? data.changedSinceLastReview : "",
+    decisionClock:
+      data.decisionClock && typeof data.decisionClock === "object" ? data.decisionClock : undefined,
+    detectionTrail: array("detectionTrail"),
+    costOfDelay:
+      data.costOfDelay && typeof data.costOfDelay === "object" ? data.costOfDelay : undefined,
+    decisionTension:
+      data.decisionTension && typeof data.decisionTension === "object"
+        ? data.decisionTension
+        : undefined,
     executiveSummary:
       typeof data.executiveSummary === "string"
         ? data.executiveSummary
@@ -111,6 +155,7 @@ function normalizeResult(value: unknown) {
     considerations: array("considerations"),
     precedents: array("precedents"),
     openQuestions: array("openQuestions"),
+    nextActions: array("nextActions"),
     recommendation: typeof data.recommendation === "string" ? data.recommendation : "",
     citedSourceCount:
       typeof data.citedSourceCount === "number"
@@ -152,7 +197,7 @@ export async function POST(req: Request) {
       return Response.json({
         ...EMPTY_RESULT,
         exposure: "Could not analyze this event automatically. Try again shortly.",
-      });
+      }, { status: 502 });
     }
   } catch (err) {
     console.error(err);
