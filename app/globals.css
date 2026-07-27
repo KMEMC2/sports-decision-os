@@ -1,23 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0e1418;
-  --surface: #161d22;
-  --surface-2: #1c252b;
-  --hairline: #263038;
-  --text: #e8edf0;
-  --text-muted: #8a99a3;
-  --signal: #e0a83d;
+  --ink: #0b0d0c;
+  --surface: #111411;
+  --surface-2: #181a17;
+  --hairline: rgba(236, 233, 223, 0.14);
+  --hairline-strong: rgba(236, 233, 223, 0.26);
+  --text: #ece9df;
+  --text-muted: #969990;
+  --signal: #a8ff3e;
+  --signal-hover: #c0ff72;
+  --signal-dark: #6fa925;
 
   --tag-trade: #5e8bb0;
   --tag-waiver: #7c8a93;
   --tag-rumor: #b08a5e;
   --tag-injury: #b0685e;
-  --tag-signing: #6f9a7a;
+  --tag-signing: #8f7ea3;
 
-  --outcome-good: #7c9a7c;
+  --outcome-good: #8fac70;
   --outcome-bad: #b0685e;
-  --outcome-mixed: #8a99a3;
+  --outcome-mixed: #969990;
+
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-display: var(--font-sans);
 }
 
 @theme inline {
@@ -29,9 +36,9 @@
   --color-text-muted: var(--text-muted);
   --color-signal: var(--signal);
 
-  --font-display: var(--font-archivo-expanded);
-  --font-sans: var(--font-plex-sans);
-  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 * {
@@ -41,8 +48,6 @@
 .font-display {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-stretch: 125%;
-  letter-spacing: 0.02em;
 }
 
 html {
@@ -52,6 +57,11 @@ html {
 body {
   background: var(--ink);
   color: var(--text);
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -103,6 +113,6 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--hairline);
+  background: var(--hairline-strong);
   border-radius: 999px;
 }
