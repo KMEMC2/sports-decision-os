@@ -27,12 +27,6 @@ export default function Home() {
           <span className="brand-mark">A</span>
           <h1>AIGM / Cascades Decision Room</h1>
         </div>
-        <div className="trust-strip" aria-label="Workspace status">
-          <span><i />Restricted workspace</span>
-          <span><i />Sources synchronized</span>
-          <span>Role permissions applied</span>
-          <span>Human judgment remains final</span>
-        </div>
         <button
           type="button"
           onClick={() => setAskOpen(true)}
